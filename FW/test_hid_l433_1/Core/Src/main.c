@@ -113,7 +113,7 @@ int main(void)
 			memcpy(hid_in_report, hid_out_report, 64);
 			for (int i = 0; i < 64; i++)
 			{
-				hid_in_report[i] += 2;
+				hid_in_report[i] = hid_out_report[i];
 			}
 			USBD_CUSTOM_HID_SendReport_FS(hid_in_report, 64);
 			is_hid_out_empty = true;
