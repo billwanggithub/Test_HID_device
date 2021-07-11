@@ -41,7 +41,7 @@ namespace test_myhid
             this.label5 = new System.Windows.Forms.Label();
             this.textBox_usb_usage_page = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
-            this.textBox_usb_usage = new System.Windows.Forms.TextBox();
+            this.textBox_out_count = new System.Windows.Forms.TextBox();
             this.button_send = new System.Windows.Forms.Button();
             this.button_read = new System.Windows.Forms.Button();
             this.SuspendLayout();
@@ -166,17 +166,17 @@ namespace test_myhid
             this.label6.TabIndex = 30;
             this.label6.Text = "Page  0X";
             // 
-            // textBox_usb_usage
+            // textBox_out_count
             // 
-            this.textBox_usb_usage.Location = new System.Drawing.Point(101, 97);
-            this.textBox_usb_usage.Name = "textBox_usb_usage";
-            this.textBox_usb_usage.Size = new System.Drawing.Size(55, 22);
-            this.textBox_usb_usage.TabIndex = 31;
-            this.textBox_usb_usage.Text = "00";
+            this.textBox_out_count.Location = new System.Drawing.Point(259, 7);
+            this.textBox_out_count.Name = "textBox_out_count";
+            this.textBox_out_count.Size = new System.Drawing.Size(55, 22);
+            this.textBox_out_count.TabIndex = 31;
+            this.textBox_out_count.Text = "1";
             // 
             // button_send
             // 
-            this.button_send.Location = new System.Drawing.Point(12, 125);
+            this.button_send.Location = new System.Drawing.Point(9, 142);
             this.button_send.Name = "button_send";
             this.button_send.Size = new System.Drawing.Size(144, 47);
             this.button_send.TabIndex = 32;
@@ -186,7 +186,7 @@ namespace test_myhid
             // 
             // button_read
             // 
-            this.button_read.Location = new System.Drawing.Point(12, 178);
+            this.button_read.Location = new System.Drawing.Point(9, 195);
             this.button_read.Name = "button_read";
             this.button_read.Size = new System.Drawing.Size(144, 47);
             this.button_read.TabIndex = 32;
@@ -202,7 +202,7 @@ namespace test_myhid
             this.ClientSize = new System.Drawing.Size(800, 597);
             this.Controls.Add(this.button_read);
             this.Controls.Add(this.button_send);
-            this.Controls.Add(this.textBox_usb_usage);
+            this.Controls.Add(this.textBox_out_count);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.textBox_usb_usage_page);
             this.Controls.Add(this.label5);
@@ -237,7 +237,7 @@ namespace test_myhid
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.TextBox textBox_usb_usage_page;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.TextBox textBox_usb_usage;
+        private System.Windows.Forms.TextBox textBox_out_count;
         private System.Windows.Forms.Button button_send;
         private System.Windows.Forms.Button button_read;
     }
