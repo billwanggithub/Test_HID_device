@@ -44,8 +44,10 @@ namespace test_myhid
         byte[] inputReportBuffer;
         byte[] hid_in_report;
         byte[] hid_out_report;
+        UInt32 byte_count_in = 0;
+        UInt32 byte_count_out = 0;
 
-        ushort out_count = 1;
+        ushort out_loop_count = 1;
 
         DeviceList device_list;
         HidStream hidStream;
@@ -83,16 +85,34 @@ namespace test_myhid
         {
             HidSharpDiagnostics.EnableTracing = true;
             HidSharpDiagnostics.PerformStrictChecks = true;
+
             device_list = DeviceList.Local;
             device_list.Changed += (x, y) =>
             {
-                UI.console_print(richTextBox_console, "Device list changed\n", Color.Red);
+                Label_usb_status.Text = "Device list changed";
+                //UI.console_print(richTextBox_console, "Device list changed\n", Color.Red);
                 //hidDevice = null;
                 //hidStream = null;
-                //hidDevice = connect();
+                hidDevice = connect();
+                if (hidDevice == null)
+                {
+                    Label_usb_status.Text = "Device DisConnected";
+                }
+                else
+                {
+                    Label_usb_status.Text = "Device Connectd";
+                }
             };
 
             hidDevice =  connect();
+            if (hidDevice == null)
+            {
+                Label_usb_status.Text = "Device DisConnected";
+            }
+            else
+            {
+                Label_usb_status.Text = "Device Connectd";
+            }
         }
 
         public void read_parameters()
@@ -104,14 +124,14 @@ namespace test_myhid
             UInt32.TryParse(textBox_usb_pid.Text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out number);
             usb_pid = (ushort)number;
 
-            UInt32.TryParse(textBox_usb_usage_page.Text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out number);
-            usb_usage_page = (ushort)number;
+            //UInt32.TryParse(textBox_usb_usage_page.Text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out number);
+            //usb_usage_page = (ushort)number;
 
-            UInt32.TryParse(textBox_out_count.Text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out number);
-            usb_usage = (ushort)number;
+            //UInt32.TryParse(textBox_usb_usage.Text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out number);
+            //usb_usage = (ushort)number;
 
-            UInt32.TryParse(textBox_out_count.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out number);
-            out_count  = (ushort)number;
+            UInt32.TryParse(textBox_out_loop_count.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out number);
+            out_loop_count  = (ushort)number;
 
         }
 
@@ -148,6 +168,30 @@ namespace test_myhid
 
         private void button_send_Click(object sender, EventArgs e)
         {
+            read_parameters();
+
+            for (int i = 0; i < out_loop_count; i++)
+            {
+                if (checkBox_read_after_write.Checked)
+                {
+                    send(1);
+                    read_raw(1000);
+                }
+                else
+                {
+                    send(1);
+                }
+            }
+        }
+
+        public void test_rw(int test_count)
+        {
+            send(1);
+            read_raw(1000);
+        }
+
+        public void send(int loop_count)
+        {
             if (hidDevice == null)
                 return;
             read_parameters();
@@ -163,13 +207,72 @@ namespace test_myhid
             //hidStream.ReadTimeout = 5000;
             //hidStream.WriteTimeout = 5000;
 
-            for (int i =0; i < out_count; i++)
+            for (int i = 0; i < loop_count; i++)
+            {
                 hidStream.Write(hid_out_report);
-
-            //inputReceiver.Start(hidStream);
+                byte_count_out += 64;
+                label_byte_count_out.Text = $"count = {byte_count_out}";
+            }
         }
 
-        public void read()
+        public int read_raw(UInt32 timeout)
+        {
+            int byteCount = 0;
+            UInt32 timer_count = timeout;
+            IAsyncResult ar = null;
+            inputReportBuffer = new byte[hidDevice.GetMaxInputReportLength()];
+
+
+            try
+            {
+                if (ar == null)
+                {
+                    ar = hidStream.BeginRead(inputReportBuffer, 0, inputReportBuffer.Length, null, null);
+                }
+
+                /* Check data receive OK? */
+                int startTime = Environment.TickCount;
+                while (true)
+                {
+                    uint elapsedTime = (uint)(Environment.TickCount - startTime);
+                    if (elapsedTime >= timeout)
+                    {
+                        UI.console_print(richTextBox_in_report, "No Data!!\n");
+                        return 0;
+                    }
+                    if (ar.IsCompleted)
+                    {                        
+                        UI.console_print(richTextBox_in_report, $"time read = {elapsedTime}ms\n");
+                        break;
+                    }               
+                }
+               
+                /* read data */
+                byteCount = hidStream.EndRead(ar);
+                byte_count_in += (uint)byteCount - 1;
+                label_byte_count_in.Text = $"count = {byte_count_in}";
+                ar = null;
+
+                if (byteCount > 0)
+                {
+                    //string hexOfBytes = string.Join(" ", inputReportBuffer.Take(byteCount).Select(b => b.ToString("X2")));
+                    //Console.WriteLine("  {0}", hexOfBytes);
+                    hid_in_report = new byte[64];
+                    Array.Copy(inputReportBuffer, 1, hid_in_report, 0, 64); // ignore report id
+                    string result = System.Text.Encoding.ASCII.GetString(hid_in_report);
+                    UI.console_print(richTextBox_in_report, result);
+                }
+            }
+            catch (Exception ex)
+            {
+                UI.console_print(richTextBox_console, "Data Read Error!!\n", Color.Red);
+                //UI.console_print(richTextBox_console, ex.ToString(), Color.Red);
+            }
+
+            return byteCount;
+        }
+
+        public void read_received_event_start()
         {
             if (hidDevice == null)
                 return;
@@ -221,8 +324,8 @@ namespace test_myhid
                 {
                     if ((dev.ProductID == usb_pid) && (dev.VendorID== usb_vid))
                     {
-                        UI.console_printline(richTextBox_console, "Device Found");
-
+                        //UI.console_printline(richTextBox_console, "Device Found");
+                        //Label_usb_status.Text = "Device Connected";
                         //HidStream hidStream_test;
                         if (dev.TryOpen(out hidStream) == false)
                         {
@@ -231,7 +334,6 @@ namespace test_myhid
                         }
                         //hidStream = hidStream_test;
                         hidDevice = dev;
-                        read();
                         return dev;
                     }
 
@@ -242,7 +344,8 @@ namespace test_myhid
                     return null;
                 }
             }
-            UI.console_printline(richTextBox_console, "Device Not Found");
+            //UI.console_printline(richTextBox_console, "Device Not Found");
+            //Label_usb_status.Text = "Device DisConnected";
             return null;
         }
 
@@ -341,10 +444,23 @@ namespace test_myhid
 
         private void button_read_Click(object sender, EventArgs e)
         {
+            read_raw(2000);
         }
 
         private void button_connect_Click(object sender, EventArgs e)
         {
+        }
+
+        private void button_test_Click(object sender, EventArgs e)
+        {
+            read_parameters();
+
+            for (int i = 0; i < out_loop_count; i++)
+            {
+                send(1);
+                read_raw(1000);
+            }
+
         }
     }
 }
