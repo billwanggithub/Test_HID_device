@@ -101,6 +101,7 @@ namespace test_myhid
                 else
                 {
                     Label_usb_status.Text = "Device Connectd";
+                    start_read_received_event();
                 }
             };
 
@@ -112,6 +113,7 @@ namespace test_myhid
             else
             {
                 Label_usb_status.Text = "Device Connectd";
+                start_read_received_event();
             }
         }
 
@@ -272,10 +274,51 @@ namespace test_myhid
             return byteCount;
         }
 
-        public void read_received_event_start()
+        public void start_read_received_event()
+        {
+            reportDescriptor = hidDevice.GetReportDescriptor();
+            inputReportBuffer = new byte[hidDevice.GetMaxInputReportLength()];
+            inputReceiver = reportDescriptor.CreateHidDeviceInputReceiver();
+            inputParser = reportDescriptor.DeviceItems[0].CreateDeviceItemInputParser();
+
+            inputReceiver.Received += (sender, e) =>
+            {
+                Report report;
+                while (inputReceiver.TryRead(inputReportBuffer, 0, out report))
+                {
+                    // Parse the report if possible.
+                    // This will return false if (for example) the report applies to a different DeviceItem.
+                    //if (inputParser.TryParseReport(inputReportBuffer, 0, report))
+                    //{
+                    //    // If you are using Windows Forms, you could call BeginInvoke here to marshal the results
+                    //    // to your main thread.
+                    //    WriteDeviceItemInputParserResult(inputParser);
+                    //}
+                    hid_in_report = new byte[64];
+                    Array.Copy(inputReportBuffer, 1, hid_in_report, 0, 64); // ignore report id
+                    string result = System.Text.Encoding.ASCII.GetString(hid_in_report);
+                    UI.console_print(richTextBox_in_report, result);
+                    byte_count_in += 64;
+                    update_label(label_byte_count_in, $"count = {byte_count_in}");
+                }
+            };
+            inputReceiver.Start(hidStream);
+        }
+
+        public void update_label(Label label, string message)
+        {
+            label.InvokeOnUIThread(() =>
+            {
+                label.Text = message;
+            }
+            );
+        }
+
+        public void start_read_received_event_old()
         {
             if (hidDevice == null)
                 return;
+
             if (hidStream == null)
                 return;
 
