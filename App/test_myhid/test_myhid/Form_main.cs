@@ -177,7 +177,7 @@ namespace test_myhid
                 if (checkBox_read_after_write.Checked)
                 {
                     send(1);
-                    read_raw(1000);
+                    read_raw(5000);
                 }
                 else
                 {
